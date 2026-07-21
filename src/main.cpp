@@ -5,6 +5,8 @@
 #include <opencv2/imgproc.hpp>
 #include <iostream>
 
+using namespace cv;
+
 int main()
 {
     // Open the video camera.
@@ -15,7 +17,7 @@ int main()
                            " ! video/x-raw, width=400, height=300" // can downsample the image after capturing
                            " ! videoflip method=rotate-180"        // remove this line if the image is upside-down
                            " ! appsink drop=true max_buffers=2";
-    cv::VideoCapture cap(pipeline, cv::CAP_GSTREAMER);
+    VideoCapture cap(pipeline, CAP_GSTREAMER);
     if (!cap.isOpened())
     {
         printf("Could not open camera.\n");
@@ -23,10 +25,10 @@ int main()
     }
 
     // Create the OpenCV window
-    cv::namedWindow("Camera", cv::WINDOW_AUTOSIZE);
-    cv::Mat frame;
-    cv::Mat thresh_frame;
-    cv::Mat hsv_frame;
+    namedWindow("Camera", WINDOW_AUTOSIZE);
+    Mat frame;
+    Mat thresh_frame;
+    Mat hsv_frame;
 
     // Measure the frame rate - initialise variables
     int frame_id = 0;
@@ -34,7 +36,7 @@ int main()
     gettimeofday(&start, NULL);
 
     // Create a control window
-    cv::namedWindow("Control", WINDOW_AUTOSIZE);
+    namedWindow("Control", WINDOW_AUTOSIZE);
     int iLowH = 0;
     int iHighH = 179;
     int iLowS = 0;
@@ -50,7 +52,7 @@ int main()
     createTrackbar("HighV", "Control", &iHighV, 255);
 
     // Create the display windows
-    cv::namedWindow("Thresholded", WINDOW_AUTOSIZE);
+    namedWindow("Thresholded", WINDOW_AUTOSIZE);
 
     for (;;)
     {
@@ -60,15 +62,15 @@ int main()
             break;
         }
 
-        cv::cvtColor(frame, hsv_frame, COLOR_BGR2HSV);
+        cvtColor(frame, hsv_frame, COLOR_BGR2HSV);
 
         // Threshold the image
-        cv::inRange(hsv_frame, Scalar(iLowH, iLowS, iLowV), Scalar(iHighH, iHighS, iHighV), thresh_frame);
+        inRange(hsv_frame, Scalar(iLowH, iLowS, iLowV), Scalar(iHighH, iHighS, iHighV), thresh_frame);
 
-        cv::imshow("Thresholded", thresh_frame);
+        imshow("Thresholded", thresh_frame);
         // show frame
-        cv::imshow("Camera", frame);
-        cv::waitKey(1);
+        imshow("Camera", frame);
+        waitKey(1);
 
         // Measure the frame rate
         frame_id++;
