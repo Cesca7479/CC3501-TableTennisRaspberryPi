@@ -66,6 +66,57 @@ int main()
 
         // Threshold the image
         inRange(hsv_frame, Scalar(iLowH, iLowS, iLowV), Scalar(iHighH, iHighS, iHighV), thresh_frame);
+        morphologyEx(thresh_frame, thresh_frame, MORPH_CLOSE, getStructuringElement(MORPH_CROSS, Size(3, 3)));
+
+        // Find the contours
+        std::vector<std::vector<Point>> contours;
+        findContours(thresh_frame, contours, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
+
+        // Find the largest contour
+        double largestArea = 0;
+        int largestIndex = -1;
+
+        for (size_t i = 0; i < contours.size(); i++)
+        {
+            double area = contourArea(contours[i]);
+
+            if (area > largestArea)
+            {
+                largestArea = area;
+                largestIndex = i;
+            }
+        }
+
+        if (largestIndex >= 0)
+        {
+            // Calculate moments of the largest contour
+            Moments m = moments(contours[largestIndex]);
+
+            if (m.m00 > 0)
+            {
+                // Calculate centroid
+                double x = m.m10 / m.m00;
+                double y = m.m01 / m.m00;
+
+                // Draw the object's actual outline
+                drawContours(frame, contours, largestIndex, Scalar(0, 255, 0), 2);
+
+                // Draw centroid
+                circle(frame, Point(x, y), 5, Scalar(0, 0, 255), FILLED);
+
+                // Convert y-coordinate so origin is at the bottom
+                double display_y = frame.rows - y;
+
+                // Draw coordinates
+                putText(frame,
+                        "(" + std::to_string((int)x) + ", " + std::to_string((int)display_y) + ")",
+                        Point(x + 10, y - 10),
+                        FONT_HERSHEY_SIMPLEX,
+                        0.5,
+                        Scalar(0, 255, 0),
+                        2);
+            }
+        }
 
         imshow("Thresholded", thresh_frame);
         // show frame
