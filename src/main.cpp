@@ -43,6 +43,8 @@ int main()
     int iHighS = 255;
     int iLowV = 0;
     int iHighV = 255;
+    int iOpen = 1;
+    int iClose = 1;
     // Create trackbars in "Control" window
     createTrackbar("LowH", "Control", &iLowH, 179); // Hue (0 - 179)
     createTrackbar("HighH", "Control", &iHighH, 179);
@@ -50,8 +52,9 @@ int main()
     createTrackbar("HighS", "Control", &iHighS, 255);
     createTrackbar("LowV", "Control", &iLowV, 255); // Value (0 - 255)
     createTrackbar("HighV", "Control", &iHighV, 255);
+    createTrackbar("Open", "Control", &iOpen, 10);
+    createTrackbar("Close", "Control", &iClose, 10);
 
-    // Create the display windows
     namedWindow("Thresholded", WINDOW_AUTOSIZE);
 
     for (;;)
@@ -66,8 +69,14 @@ int main()
 
         // Threshold the image
         inRange(hsv_frame, Scalar(iLowH, iLowS, iLowV), Scalar(iHighH, iHighS, iHighV), thresh_frame);
-        morphologyEx(thresh_frame, thresh_frame, MORPH_CLOSE, getStructuringElement(MORPH_CROSS, Size(3, 3)));
-
+        if (iOpen != 0)
+        {
+            morphologyEx(thresh_frame, thresh_frame, MORPH_OPEN, getStructuringElement(MORPH_ELLIPSE, Size(iOpen, iOpen)));
+        }
+        if (iClose != 0)
+        {
+            morphologyEx(thresh_frame, thresh_frame, MORPH_CLOSE, getStructuringElement(MORPH_ELLIPSE, Size(iClose, iClose)));
+        }
         // Find the contours
         std::vector<std::vector<Point>> contours;
         findContours(thresh_frame, contours, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
