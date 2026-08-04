@@ -18,6 +18,9 @@
 #include <thread>
 #include <csignal>
 
+const double MIN_OBJECT_AREA = 15.0;
+const double MAX_OBJECT_AREA = 100.0;
+
 int bt = -1;
 
 using namespace cv;
@@ -60,9 +63,8 @@ int main()
                            " ! videoconvert"
                            " ! videoscale"
                            " ! video/x-raw, width=400, height=300"
-                           " ! videoflip method=rotate-180"
                            " ! appsink drop=true max_buffers=2";
-
+    // " ! videoflip method=rotate-180"
     VideoCapture cap(pipeline, CAP_GSTREAMER);
     if (!cap.isOpened())
     {
@@ -73,14 +75,22 @@ int main()
     namedWindow("Thresholded", WINDOW_AUTOSIZE);
     namedWindow("Control", WINDOW_AUTOSIZE);
     // HSV controls
-    int iLowH = 40;
+    // int iLowH = 40;
+    // int iHighH = 79;
+    // int iLowS = 2;
+    // int iHighS = 255;
+    // int iLowV = 66;
+    // int iHighV = 255;
+    // int iOpen = 9;
+    // int iClose = 3;
+    int iLowH = 18;
     int iHighH = 79;
-    int iLowS = 2;
+    int iLowS = 4;
     int iHighS = 255;
-    int iLowV = 66;
+    int iLowV = 0;
     int iHighV = 255;
-    int iOpen = 9;
-    int iClose = 3;
+    int iOpen = 4;
+    int iClose = 1;
     createTrackbar("LowH", "Control", &iLowH, 179);
     createTrackbar("HighH", "Control", &iHighH, 179);
     createTrackbar("LowS", "Control", &iLowS, 255);
@@ -125,12 +135,17 @@ int main()
         for (size_t i = 0; i < contours.size(); ++i)
         {
             double area = contourArea(contours[i]);
+            if (area < MIN_OBJECT_AREA || area > MAX_OBJECT_AREA)
+            {
+                continue;
+            }
             if (area > largest_area)
             {
                 largest_area = area;
                 largest_index = static_cast<int>(i);
             }
         }
+        // std::cout << "Largest area = " << largest_area << std::endl;
         if (largest_index >= 0)
         {
             Moments m = moments(contours[largest_index]);
@@ -157,13 +172,20 @@ int main()
                 // Draw coordinates (origin at bottom-left)
                 double display_y = frame.rows - position.y;
                 putText(frame, "(" + std::to_string((int)position.x) + ", " + std::to_string((int)display_y) + ")", Point(position.x + 10, position.y - 10), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 0), 2);
-                update_position(player_side, ball_position, (int)position.x);
+                if ((abs(position.x - prev_position.x) < DISTANCE_THRESHOLD) && (abs(position.y - prev_position.y) < DISTANCE_THRESHOLD))
+                {
+                    update_position(player_side, ball_position, (int)position.x);
+                }
                 // Update history
                 prev_position = position;
                 prev_velocity = velocity;
                 prev_time = now;
                 has_previous = true;
             }
+        }
+        else
+        {
+            has_previous = false;
         }
         imshow("Thresholded", thresh_frame);
         imshow("Camera", frame);

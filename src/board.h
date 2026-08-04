@@ -1,6 +1,9 @@
 #pragma once
 
-enum PLAYER {
+#define DISTANCE_THRESHOLD 100
+
+enum PLAYER
+{
     PLAYER_1,
     PLAYER_2
 };
