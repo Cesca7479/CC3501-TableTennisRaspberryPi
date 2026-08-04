@@ -5,6 +5,7 @@
 #include "bluetooth.h"
 #include "vision.h"
 #include "board.h"
+#include "thingspeak.h"
 
 #include <iostream>
 #include <chrono>
@@ -51,6 +52,7 @@ void shutdown_handler(int signum)
 
 int main()
 {
+    update_total_wins();
     signal(SIGINT, shutdown_handler);
     // Open the video camera
     std::string pipeline = "libcamerasrc"

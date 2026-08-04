@@ -1,5 +1,10 @@
 #pragma once
 
+enum PLAYER {
+    PLAYER_1,
+    PLAYER_2
+};
+
 enum SIDE
 {
     LEFT,
