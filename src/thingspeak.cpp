@@ -17,7 +17,7 @@ size_t http_callback_upload(void *buffer, size_t sz, size_t nmemb, void *userp) 
     return size;
 }
 
-void upload_state(int player_1_score, int player_2_score, int player_1_wins, int player_2_wins) {
+void upload_state(int player_1_score, int player_2_score, int player_1_session_wins, int player_2_session_wins, int player_1_total_wins, int player_2_total_wins) {
     CURL *curl = curl_easy_init();
     if (!curl) {
         printf("Failed to init curl\r\n");
@@ -27,8 +27,10 @@ void upload_state(int player_1_score, int player_2_score, int player_1_wins, int
     std::string URL = "https://api.thingspeak.com/update?api_key=" + API_KEY + 
         "&field1=" + std::to_string(player_1_score) +
         "&field2=" + std::to_string(player_2_score) +
-        "&field3=" + std::to_string(player_1_wins) +
-        "&field4=" + std::to_string(player_2_wins);
+        "&field3=" + std::to_string(player_1_session_wins) +
+        "&field4=" + std::to_string(player_2_session_wins) +
+        "&field5=" + std::to_string(player_1_total_wins) +
+        "&field6=" + std::to_string(player_2_total_wins);
     printf("URL: %s\r\n", URL.c_str());
 
   
@@ -52,7 +54,7 @@ size_t http_callback_read(void *buffer, size_t sz, size_t nmemb, void *userp) {
     return sz * nmemb;
 }
 
-void update_total_wins() 
+void read_total_wins() 
 {
     std::string response;
 
@@ -80,8 +82,8 @@ void update_total_wins()
 
     auto json = nlohmann::json::parse(response);
 
-    total_wins[PLAYER_1] = std::stoi(json["field3"].get<std::string>());
-    total_wins[PLAYER_2] = std::stoi(json["field4"].get<std::string>());
+    total_wins[PLAYER_1] = std::stoi(json["field5"].get<std::string>());
+    total_wins[PLAYER_2] = std::stoi(json["field6"].get<std::string>());
     
     printf("Player1 Wins: %d\r\nPlayer2 Wins: %d\r\n", total_wins[PLAYER_1], total_wins[PLAYER_2]);
 }
