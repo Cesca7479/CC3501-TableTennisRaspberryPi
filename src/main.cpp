@@ -4,6 +4,7 @@
 #include <opencv2/imgproc.hpp>
 #include "bluetooth.h"
 #include "vision.h"
+#include "board.h"
 
 #include <iostream>
 #include <chrono>
@@ -19,6 +20,20 @@
 int bt = -1;
 
 using namespace cv;
+
+void update_position(uint8_t player_side, uint8_t ball_position, uint16_t x_position)
+{
+    if (is_side_change(player_side, x_position))
+    {
+        const char *msg = (player_side == LEFT) ? "Left\n" : "Right\n";
+        send_bluetooth_message(bt, msg);
+    }
+    if (is_ball_position_change(ball_position, x_position))
+    {
+        const char *msg = (player_side == EDGE) ? "Edge\n" : "Center\n";
+        send_bluetooth_message(bt, msg);
+    }
+}
 
 void shutdown_handler(int signum)
 {
@@ -87,6 +102,10 @@ int main()
     {
         connect_bluetooth(bt, "FC0FE7BFE75B");
     }
+
+    uint8_t ball_position = NUM_POSITIONS;
+    uint8_t player_side = NUM_SIDES;
+
     for (;;)
     {
         if (!cap.read(frame))
@@ -131,11 +150,14 @@ int main()
                         putText(frame, "BOUNCE DETECTED", Point(10, 30), FONT_HERSHEY_SIMPLEX, 0.8, Scalar(0, 0, 255), 2);
                         const char *msg = "Bounce\n";
                         send_bluetooth_message(bt, msg);
+                        const char *othermsg = "Something\n";
+                        send_bluetooth_message(bt, othermsg);
                     }
                 }
                 // Draw coordinates (origin at bottom-left)
                 double display_y = frame.rows - position.y;
                 putText(frame, "(" + std::to_string((int)position.x) + ", " + std::to_string((int)display_y) + ")", Point(position.x + 10, position.y - 10), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 0), 2);
+                update_position(player_side, ball_position, (int)position.x);
                 // Update history
                 prev_position = position;
                 prev_velocity = velocity;

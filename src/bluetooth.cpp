@@ -83,7 +83,7 @@ bool test_connection(int fd)
         if (std::chrono::steady_clock::now() - start >
             std::chrono::seconds(5))
         {
-            std::cout << "No response from remote board\n";
+            std::cout << "No response from remote board. Trying again.\n";
             return false;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(10));

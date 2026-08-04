@@ -1,4 +1,5 @@
 #include <opencv2/opencv.hpp>
+#include "board.h"
 
 void find_threshold(cv::Mat &frame, cv::Mat &hsv_frame, int iLowH, int iLowS, int iLowV, int iHighH, int iHighS, int iHighV, cv::Mat &thresh_frame, int iOpen, int iClose)
 {
@@ -31,4 +32,46 @@ bool detect_bounce(const cv::Point2f &position, const cv::Point2f &prev_position
     }
     float angle_degrees = std::acos(cos_theta) * 180.0f / CV_PI;
     return (speed > 50 && prev_speed > 50) && (y_reversed || angle_degrees > 20.0f);
+}
+
+bool is_ball_position_change(uint8_t ball_position, int x_position)
+{
+    if (x_position < 100 || x_position > 300)
+    {
+        if (ball_position != EDGE)
+        {
+            ball_position = EDGE;
+            return 1;
+        }
+    }
+    else
+    {
+        if (ball_position != CENTER)
+        {
+            ball_position = CENTER;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+bool is_side_change(uint8_t player_side, int x_position)
+{
+    if (x_position <= 200)
+    {
+        if (player_side != LEFT)
+        {
+            player_side = LEFT;
+            return 1;
+        }
+    }
+    else
+    {
+        if (player_side != RIGHT)
+        {
+            player_side = RIGHT;
+            return 1;
+        }
+    }
+    return 0;
 }
