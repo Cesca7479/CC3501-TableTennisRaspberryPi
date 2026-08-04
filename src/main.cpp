@@ -52,7 +52,7 @@ void shutdown_handler(int signum)
 
 int main()
 {
-    update_total_wins();
+    read_total_wins();
     signal(SIGINT, shutdown_handler);
     // Open the video camera
     std::string pipeline = "libcamerasrc"
@@ -174,6 +174,7 @@ int main()
         {
             break;
         }
+        bluetooth_receive_results(bt);
     }
     cap.release();
     destroyAllWindows();
