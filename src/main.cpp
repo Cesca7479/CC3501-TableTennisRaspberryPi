@@ -21,7 +21,7 @@ int bt = -1;
 
 using namespace cv;
 
-void update_position(uint8_t player_side, uint8_t ball_position, uint16_t x_position)
+void update_position(uint8_t &player_side, uint8_t &ball_position, uint16_t x_position)
 {
     if (is_side_change(player_side, x_position))
     {
@@ -30,7 +30,7 @@ void update_position(uint8_t player_side, uint8_t ball_position, uint16_t x_posi
     }
     if (is_ball_position_change(ball_position, x_position))
     {
-        const char *msg = (player_side == EDGE) ? "Edge\n" : "Center\n";
+        const char *msg = (ball_position == EDGE) ? "Edge\n" : "Center\n";
         send_bluetooth_message(bt, msg);
     }
 }
@@ -106,7 +106,7 @@ int main()
     uint8_t ball_position = NUM_POSITIONS;
     uint8_t player_side = NUM_SIDES;
 
-    for (;;)
+    while (true)
     {
         if (!cap.read(frame))
         {
@@ -150,8 +150,6 @@ int main()
                         putText(frame, "BOUNCE DETECTED", Point(10, 30), FONT_HERSHEY_SIMPLEX, 0.8, Scalar(0, 0, 255), 2);
                         const char *msg = "Bounce\n";
                         send_bluetooth_message(bt, msg);
-                        const char *othermsg = "Something\n";
-                        send_bluetooth_message(bt, othermsg);
                     }
                 }
                 // Draw coordinates (origin at bottom-left)

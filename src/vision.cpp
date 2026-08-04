@@ -34,7 +34,7 @@ bool detect_bounce(const cv::Point2f &position, const cv::Point2f &prev_position
     return (speed > 50 && prev_speed > 50) && (y_reversed || angle_degrees > 20.0f);
 }
 
-bool is_ball_position_change(uint8_t ball_position, int x_position)
+bool is_ball_position_change(uint8_t &ball_position, int x_position)
 {
     if (x_position < 100 || x_position > 300)
     {
@@ -55,7 +55,7 @@ bool is_ball_position_change(uint8_t ball_position, int x_position)
     return 0;
 }
 
-bool is_side_change(uint8_t player_side, int x_position)
+bool is_side_change(uint8_t &player_side, int x_position)
 {
     if (x_position <= 200)
     {

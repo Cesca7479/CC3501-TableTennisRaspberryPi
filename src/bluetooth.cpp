@@ -19,14 +19,8 @@ int open_bluetooth_uart(const char *device)
     tcgetattr(fd, &options);
     cfsetispeed(&options, B115200);
     cfsetospeed(&options, B115200);
-    options.c_cflag |= (CLOCAL | CREAD);
-    options.c_cflag &= ~CSIZE;
-    options.c_cflag |= CS8;
-    options.c_cflag &= ~PARENB;
-    options.c_cflag &= ~CSTOPB;
-    options.c_lflag = 0;
-    options.c_iflag = 0;
-    options.c_oflag = 0;
+    cfmakeraw(&options);                 // sets raw-mode flags for you
+    options.c_cflag |= (CLOCAL | CREAD); // still needed, cfmakeraw doesn't set these
     tcsetattr(fd, TCSANOW, &options);
     return fd;
 }
@@ -63,31 +57,19 @@ bool connect_bluetooth(int fd, const std::string &address)
 
 bool test_connection(int fd)
 {
-    std::string message = "PING\n";
-    send_bluetooth_message(fd, message);
-    char buffer[128];
-    std::string received;
+    send_bluetooth_message(fd, "PING\n");
+    std::string line;
     auto start = std::chrono::steady_clock::now();
-    while (true)
+    while (std::chrono::steady_clock::now() - start < std::chrono::seconds(5))
     {
-        int n = read(fd, buffer, sizeof(buffer));
-        if (n > 0)
+        if (bluetooth_read_line(fd, line) && line.find("PONG") != std::string::npos)
         {
-            received.append(buffer, n);
-            if (received.find("PONG") != std::string::npos)
-            {
-                std::cout << "Bluetooth link verified\n";
-                return true;
-            }
+            std::cout << "Bluetooth link verified\n";
+            return true;
         }
-        if (std::chrono::steady_clock::now() - start >
-            std::chrono::seconds(5))
-        {
-            std::cout << "No response from remote board. Trying again.\n";
-            return false;
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
+    std::cout << "No response from remote board. Trying again.\n";
+    return false;
 }
 
 void send_bluetooth_message(int bt_device, const std::string &message)
@@ -98,4 +80,35 @@ void send_bluetooth_message(int bt_device, const std::string &message)
     }
     write(bt_device, message.c_str(), message.size());
     tcdrain(bt_device);
+}
+
+bool bluetooth_read_line(int fd, std::string &result)
+{
+    static std::string buffer; // holds any partial data between calls
+    char chunk[32];
+    int n = read(fd, chunk, sizeof(chunk));
+    if (n > 0)
+    {
+        buffer.append(chunk, n);
+    }
+    size_t nl = buffer.find('\n');
+    if (nl != std::string::npos)
+    {
+        result = buffer.substr(0, nl);
+        buffer.erase(0, nl + 1);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+void bluetooth_receive_results(int fd)
+{
+    std::string result;
+    if (bluetooth_read_line(fd, result))
+    {
+        int score;
+        }
 }
