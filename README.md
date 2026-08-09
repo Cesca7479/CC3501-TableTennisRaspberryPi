@@ -1,8 +1,8 @@
 # Table Tennis Referee
 
-This is the Raspberry Pi code for the CC3501 product created by **Francesca Adcock, Keya Wong** and **Jamie White.**
+This is a program that uses Raspberry Pi code for the CC3501 product created by **Francesca Adcock, Keya Wong** and **Jamie White.**
 
-The product is a **Table Tennis Referee Robot,** which automatically adjudicates casual and professional table tennis matches in order to avoid player disputes. The system automatically adjudicates ping pong matches by combining piezoelectric bounce sensing, camera-based ball tracking, Bluetooth communication, and automated scoring logic.
+The product is a **Table Tennis Referee Robot,** which automatically adjudicates casual and professional table tennis matches in order to avoid player disputes. The system automatically adjudicates table tennis matches by combining piezoelectric bounce sensing, camera-based ball tracking, Bluetooth communication, and automated scoring logic. The system provides instant feedback through multiple visual and auditory components to create a straightforward and responsive user experience. This is done through a digital display, buttons, buzzers, leds, dual axis motor movement, a physical hat ID system for game mode switching and result uploads to a wesbite.
 
 ## System Overview
 
@@ -17,21 +17,26 @@ Communication between the RP2040 and Raspberry Pi is performed using Bluetooth (
 
 ## Key Features
 
- - Piezoelectric sensors that detect ball bounces and net hits
- - Camera tracking to cross-reference ball bounces, and used to detect which side of the table the ball is currently located on
+ - Determing points
+   - Piezoelectric sensors that detect ball bounces and net hits
+   - Camera tracking to cross-reference ball bounces, and used to detect which side of the table the ball is currently located on
  - Internet communication through Thingspeak to upload current scores, total wins in a current session and all-time wins
  - Bluetooth connection between the RP2040 custom board inside the robot and the Raspberry Pi which does the image processing and internet communication
- - Servo motor which moves the robot's arms depending on certain events during a game
- - LEDs to indicate points, serves and faults
- - 4-digit 7-segment display to show player scores, and communicate lets and game modes
- - Buttons to manually adjust player scores
- - Different game modes for casual and professional-style games with different rules and regulations, and ability to run games with and without camera included
- - Automatic mode sensing by placing different hats on the head of the robot
- - Sounds played through the piezo electric sensors (which can act as a buzzer) to indicate when points are scored, who serves, end of the match, button selection and faults
- - Portability of the robot by powering it with a 9V battery
- - Power protection and decision making if powered by both micro-USB and Battery, to prioritize USB power and avoid reverse current
- - Current limiting and motor circuit protection both in hardware and software to prevent overcurrent when motor stalls
- - Testing to ensure all systems work as appropriate
+ - Physical user interface
+   - 4-digit 7-segment display to show player scores, and communicate lets and game modes
+   - Buttons to manually adjust player scores, confirm game mode and confirm victories
+ - Referee reactions to indicate points, serves, faults, victory and select conditions that include:
+   - Servo motor which enables dual axis movement, moving the robot's arm and head
+   - LEDs
+   - Sounds played through the piezo electric sensors (which can act as a buzzer)
+ - Game modes: Casual, Professional Long, Professional Short and No sound
+   - Each mode has different rules, regulations and features 
+   - Physical hat ID system to determine mode at beggining of each game (hat placed ontop of robot's head)
+ - Power and Protection 
+   - Portability of the robot by powering it with a 9V battery
+   - Power protection and decision making if powered by both micro-USB and Battery, to prioritize USB power and avoid reverse current
+   - Current limiting and motor circuit protection both in hardware and software to prevent overcurrent when motor stalls
+   - Testing to ensure all systems work as appropriate
 
 
 ## Hardware Requirements
@@ -39,10 +44,10 @@ Communication between the RP2040 and Raspberry Pi is performed using Bluetooth (
 - RP2040 microcontroller and board
 - RN4870 Bluetooth module
 - HT16K33 4-dgiti 7-segment display
-- WS2812 LEDs
-- Piezoelectric sensors
-- Servo Motor
-- Push buttons
+- 2 x WS2812 LEDs
+- 3 x Piezoelectric sensors 
+- SG90 Tower Pro Servo Motor
+- 3 x Tactile push buttons
 - Hats for modes
 - Robot
 - 9V battery input (or microUSB power)
