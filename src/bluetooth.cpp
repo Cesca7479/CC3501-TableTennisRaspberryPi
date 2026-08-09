@@ -118,16 +118,18 @@ void bluetooth_receive_results(int fd)
         if (std::sscanf(result.c_str(), "Player1: %d, Player2: %d", &scores[PLAYER_1], &scores[PLAYER_2]) == 2)
         {
             printf("Score updated: Player1: %d  Player2: %d", scores[0], scores[1]);
+            upload_state(scores[PLAYER_1], scores[PLAYER_2],
+                         session_wins[PLAYER_1], session_wins[PLAYER_2],
+                         total_wins[PLAYER_1], total_wins[PLAYER_2]);
         }
         else if (std::sscanf(result.c_str(), "Won: Player%d", &player) == 1)
         {
             session_wins[player - 1]++;
             total_wins[player - 1]++;
             printf("Player %d has won!\r\n", player);
+            upload_state(scores[PLAYER_1], scores[PLAYER_2],
+                         session_wins[PLAYER_1], session_wins[PLAYER_2],
+                         total_wins[PLAYER_1], total_wins[PLAYER_2]);
         }
-
-        upload_state(scores[PLAYER_1], scores[PLAYER_2],
-                     session_wins[PLAYER_1], session_wins[PLAYER_2],
-                     total_wins[PLAYER_1], total_wins[PLAYER_2]);
     }
 }

@@ -18,13 +18,16 @@
 #include <thread>
 #include <csignal>
 
-const double MIN_OBJECT_AREA = 15.0;
-const double MAX_OBJECT_AREA = 100.0;
-
 int bt = -1;
 
 using namespace cv;
 
+/**
+ * @brief Send updated position over Bluetooth
+ * @param player_side Left or Right, depending on which side the ball is on
+ * @param ball_position Center or Edge of the table
+ * @param x_position Current x position
+ */
 void update_position(uint8_t &player_side, uint8_t &ball_position, uint16_t x_position)
 {
     if (is_side_change(player_side, x_position))
@@ -39,6 +42,10 @@ void update_position(uint8_t &player_side, uint8_t &ball_position, uint16_t x_po
     }
 }
 
+/**
+ * @brief Initiate shutdown sequence, including breaking bluetooth connection
+ * @param signum Signal for the shutdown sequence
+ */
 void shutdown_handler(int signum)
 {
     std::cout << "\nShutting down...\n";
@@ -75,22 +82,25 @@ int main()
     namedWindow("Thresholded", WINDOW_AUTOSIZE);
     namedWindow("Control", WINDOW_AUTOSIZE);
     // HSV controls
-    // int iLowH = 40;
-    // int iHighH = 79;
-    // int iLowS = 2;
-    // int iHighS = 255;
-    // int iLowV = 66;
-    // int iHighV = 255;
-    // int iOpen = 9;
-    // int iClose = 3;
-    int iLowH = 18;
-    int iHighH = 79;
-    int iLowS = 4;
+    int iLowH = 137;
+    int iHighH = 166;
+    int iLowS = 59;
     int iHighS = 255;
     int iLowV = 0;
     int iHighV = 255;
-    int iOpen = 4;
-    int iClose = 1;
+    int iOpen = 5;
+    int iClose = 0;
+    int iMinThresh = 10;
+    int iMaxThresh = 27;
+    int iMaxSpeed = 100;
+    // int iLowH = 18;
+    // int iHighH = 79;
+    // int iLowS = 4;
+    // int iHighS = 255;
+    // int iLowV = 0;
+    // int iHighV = 255;
+    // int iOpen = 4;
+    // int iClose = 1;
     createTrackbar("LowH", "Control", &iLowH, 179);
     createTrackbar("HighH", "Control", &iHighH, 179);
     createTrackbar("LowS", "Control", &iLowS, 255);
@@ -99,6 +109,9 @@ int main()
     createTrackbar("HighV", "Control", &iHighV, 255);
     createTrackbar("Open", "Control", &iOpen, 10);
     createTrackbar("Close", "Control", &iClose, 10);
+    createTrackbar("MinimumSize", "Control", &iMinThresh, 100);
+    createTrackbar("MaximumSize", "Control", &iMaxThresh, 100);
+    createTrackbar("MaximumSpeed", "Control", &iMaxSpeed, 200);
     Mat frame, hsv_frame, thresh_frame;
     // Tracking state
     Point2f prev_position(0, 0);
@@ -135,7 +148,7 @@ int main()
         for (size_t i = 0; i < contours.size(); ++i)
         {
             double area = contourArea(contours[i]);
-            if (area < MIN_OBJECT_AREA || area > MAX_OBJECT_AREA)
+            if (area < iMinThresh || area > iMaxThresh)
             {
                 continue;
             }
@@ -149,38 +162,82 @@ int main()
         if (largest_index >= 0)
         {
             Moments m = moments(contours[largest_index]);
+
             if (m.m00 > 0)
             {
                 Point2f position(m.m10 / m.m00, m.m01 / m.m00);
-                // Draw object
-                drawContours(frame, contours, largest_index, Scalar(0, 255, 0), 2);
-                circle(frame, position, 5, Scalar(0, 0, 255), FILLED);
+
                 auto now = Clock::now();
                 double dt = std::chrono::duration<double>(now - prev_time).count();
+
                 Point2f velocity(0, 0);
-                Point2f accel(0, 0);
-                if (has_previous && dt > 1e-6)
+
+                // Assume valid unless proven otherwise
+                bool valid_motion = true;
+
+                if (has_previous)
                 {
-                    bool bounced = detect_bounce(position, prev_position, prev_velocity, dt, velocity);
-                    if (bounced)
+                    double dx = std::abs(position.x - prev_position.x);
+                    double dy = std::abs(position.y - prev_position.y);
+
+                    valid_motion = (dx < iMaxSpeed) &&
+                                   (dy < iMaxSpeed);
+                }
+
+                // Only process if movement is reasonable
+                if (valid_motion)
+                {
+                    // ----- Draw object -----
+                    drawContours(frame, contours, largest_index, Scalar(0, 255, 0), 2);
+                    circle(frame, position, 5, Scalar(0, 0, 255), FILLED);
+
+                    // ----- Bounce detection -----
+                    if (has_previous && dt > 1e-6)
                     {
-                        putText(frame, "BOUNCE DETECTED", Point(10, 30), FONT_HERSHEY_SIMPLEX, 0.8, Scalar(0, 0, 255), 2);
-                        const char *msg = "Bounce\n";
-                        send_bluetooth_message(bt, msg);
+                        bool bounced = detect_bounce(position, prev_position,
+                                                     prev_velocity, dt, velocity);
+
+                        if (bounced)
+                        {
+                            putText(frame, "BOUNCE DETECTED", Point(10, 30),
+                                    FONT_HERSHEY_SIMPLEX, 0.8,
+                                    Scalar(0, 0, 255), 2);
+
+                            send_bluetooth_message(bt, "Bounce\n");
+                        }
                     }
-                }
-                // Draw coordinates (origin at bottom-left)
-                double display_y = frame.rows - position.y;
-                putText(frame, "(" + std::to_string((int)position.x) + ", " + std::to_string((int)display_y) + ")", Point(position.x + 10, position.y - 10), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 0), 2);
-                if ((abs(position.x - prev_position.x) < DISTANCE_THRESHOLD) && (abs(position.y - prev_position.y) < DISTANCE_THRESHOLD))
-                {
+
+                    // ----- Draw coordinates -----
+                    double display_y = frame.rows - position.y;
+
+                    putText(frame,
+                            "(" + std::to_string((int)position.x) + ", " +
+                                std::to_string((int)display_y) + ")",
+                            Point(position.x + 10, position.y - 10),
+                            FONT_HERSHEY_SIMPLEX, 0.5,
+                            Scalar(0, 255, 0), 2);
+
+                    // ----- Bluetooth update -----
                     update_position(player_side, ball_position, (int)position.x);
+
+                    // ----- Update history -----
+                    prev_position = position;
+                    prev_velocity = velocity;
+                    prev_time = now;
+                    has_previous = true;
                 }
-                // Update history
-                prev_position = position;
-                prev_velocity = velocity;
-                prev_time = now;
-                has_previous = true;
+                // else
+                // {
+                //     // Ignore this detection completely
+                //     // Do not draw it, do not send Bluetooth messages,
+                //     // and do not update prev_position.
+
+                //     std::cout << "Ignored jump: dx="
+                //               << std::abs(position.x - prev_position.x)
+                //               << " dy="
+                //               << std::abs(position.y - prev_position.y)
+                //               << std::endl;
+                // }
             }
         }
         else

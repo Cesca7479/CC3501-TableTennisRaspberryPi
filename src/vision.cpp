@@ -6,13 +6,13 @@ void find_threshold(cv::Mat &frame, cv::Mat &hsv_frame, int iLowH, int iLowS, in
     // Convert to HSV and threshold
     cv::cvtColor(frame, hsv_frame, cv::COLOR_BGR2HSV);
     cv::inRange(hsv_frame, cv::Scalar(iLowH, iLowS, iLowV), cv::Scalar(iHighH, iHighS, iHighV), thresh_frame);
-    if (iOpen > 0)
-    {
-        cv::morphologyEx(thresh_frame, thresh_frame, cv::MORPH_OPEN, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(iOpen, iOpen)));
-    }
     if (iClose > 0)
     {
         cv::morphologyEx(thresh_frame, thresh_frame, cv::MORPH_CLOSE, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(iClose, iClose)));
+    }
+    if (iOpen > 0)
+    {
+        cv::morphologyEx(thresh_frame, thresh_frame, cv::MORPH_OPEN, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(iOpen, iOpen)));
     }
 }
 
