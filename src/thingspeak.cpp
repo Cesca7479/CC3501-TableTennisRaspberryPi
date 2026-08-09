@@ -62,7 +62,6 @@ void read_total_wins()
     if (!curl) {
         printf("Failed to init curl\r\n");
     }
-    // https://api.thingspeak.com/channels/3443442/feeds/last.json?api_key=3C28J6WWZIYXYVPF
     std::string API_KEY = "3C28J6WWZIYXYVPF";
     std::string URL = "https://api.thingspeak.com/channels/3443442/feeds/last.json?api_key=" + API_KEY;
     printf("URL: %s\r\n", URL.c_str());
